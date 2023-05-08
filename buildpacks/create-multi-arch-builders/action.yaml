@@ -41,7 +41,7 @@ runs:
       registry_port=5000
       local_registry_uri="localhost:$registry_port"
       local_registry_pack="$local_registry_uri/pack"
-      local_image_uri="$local_registry_uri/$(echo $base_image_uri | md5)"
+      local_image_uri="$local_registry_uri/$(echo $base_image_uri | git hash-object --stdin -w)"
       buildx_builder=host-network
 
       # Build from releases by default
