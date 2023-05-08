@@ -100,13 +100,17 @@ runs:
       # Create buildx builder with access to host network (if not already created)
       docker buildx use $buildx_builder || docker buildx create --name $buildx_builder --driver-opt network=host --use
 
+      docker run --privileged --rm tonistiigi/binfmt --install all
+      docker run --rm arm64v8/alpine uname -a
+
       # Start local registry (if not already running)
       docker container inspect registry > /dev/null 2>&1 || docker run -d -p $registry_port:$registry_port --restart=always --name registry registry:2
 
-      echo "Running containers"
-      docker ps
       echo "Downloaded images"
       docker image ls
+
+      echo "Running containers"
+      docker ps
 
       # Create custom multi-arch pack image because the `buildpacksio/pack` image does not contain stand-alone binary
       docker buildx build \

@@ -40,6 +40,7 @@ jobs:
           FROM ${image_tag}
           USER root
           COPY --from=go-arch /usr/local/bin/go-arch /usr/local/bin/go-arch
+          RUN uname -a
           RUN arch
           RUN go-arch
           RUN /cnb/lifecycle/lifecycle -version
