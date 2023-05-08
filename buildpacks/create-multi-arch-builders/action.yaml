@@ -191,16 +191,26 @@ runs:
         # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
         # so we need this workaround to fix the platform value for arm64 images
         if [ "$(crane config ${local_image_tag}-arm64 | jq .architecture -r)" = "amd64" ]; then
-          docker pull -q --platform linux/amd64 "${local_image_tag}-arm64"
-          docker tag "${local_image_tag}-arm64" "${local_image_tag}-arm64-invalid-arch"
-          docker inspect "${local_image_tag}-arm64-invalid-arch" | jq  '.[0].Architecture'
-          docker push "${local_image_tag}-arm64-invalid-arch"
-          docker image rm "${local_image_tag}-arm64"
-          echo "FROM ${local_image_tag}-arm64-invalid-arch" > Dockerfile
-          docker build -q --platform linux/arm64 -t "${local_image_tag}-arm64" .
+          tarfile="${tag}-invalid-arch.tar"
+          extracted="${tag}-invalid-arch"
+          updated_tarfile="${tag}-updated-arch.tar"
+
+          docker save ${local_image_tag}-arm64 -o $tarfile
+
+          mkdir -p $extracted
+          tar -C $extracted -xf $tarfile
+          cd $extracted
+          config_json="$(cat manifest.json | jq '.[0].Config' -r)"
+          cat $config_json | jq '. += {architecture: "arm64"}' > arm64.json
+          mv arm64.json $config_json
+          cd ..
+          tar -C $extracted -cf $updated_tarfile $(ls $extracted)
+
+          docker load -i $updated_tarfile
           docker inspect "${local_image_tag}-arm64" | jq  '.[0].Architecture'
-          docker push "${local_image_tag}-arm64"
+          docker push -q "${local_image_tag}-arm64"
           crane config "${local_image_tag}-arm64" | jq .architecture
+          rm -rf $extracted $tarfile $updated_tarfile
         fi
 
         # Create a multi-arch image in the local registry first
