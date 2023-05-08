@@ -5,7 +5,7 @@ env:
 jobs:
   # Use un-authenticated ephemeral registry image uri for testing
   ttl-sh:
-    runs-on: ubuntu-22.04
+    runs-on: buildjet-4vcpu-ubuntu-2204-arm
     outputs:
       uri: ${{ steps.image-uri.outputs.uri }}
       tags: ${{ steps.create-multi-arch-builders.outputs.tags }}
