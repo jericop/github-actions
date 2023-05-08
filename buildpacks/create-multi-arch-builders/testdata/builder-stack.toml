@@ -1,0 +1,6 @@
+description = "Uses deprecated stack only"
+
+[stack]
+  id = "io.buildpacks.stacks.jericop.jammy"
+  build-image = "ghcr.io/jericop/build-jammy:stack"
+  run-image = "ghcr.io/jericop/run-jammy:stack"

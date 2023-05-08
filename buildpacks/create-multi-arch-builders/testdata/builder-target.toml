@@ -1,0 +1,8 @@
+description = "Includes build and run images which set CNB_TARGET env variables during builds. Does not set deprecated stack"
+
+[build]
+image = "ghcr.io/jericop/build-jammy:target"
+
+[run]
+[[run.images]]
+image = "ghcr.io/jericop/run-jammy:target"

@@ -1,0 +1,14 @@
+description = "Includes deprecated stack (for backward compatibility) and build and run images which set CNB_TARGET env variables during builds"
+
+[stack]
+  id = "io.buildpacks.stacks.jericop.jammy"
+  build-image = "ghcr.io/jericop/build-jammy:latest"
+  run-image = "ghcr.io/jericop/run-jammy:latest"
+
+[build]
+image = "ghcr.io/jericop/build-jammy:latest"
+
+
+[run]
+[[run.images]]
+image = "ghcr.io/jericop/run-jammy:latest"
