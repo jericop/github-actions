@@ -17,7 +17,7 @@ Custom GitHub Actions
 The `buildpacks/create-multi-arch-builders` action parses `builder-<tag>.toml` files in the given `path` and for each file it creates a multi-arch (amd64, arm64) builder image and publishes them to the given `base-image-uri` with `<tag>` as the tag.
 
 ```yaml
-uses: jericop/github-actions/buildpacks/create-multi-arch-builders@v0.0.1
+uses: jericop/github-actions/buildpacks/create-multi-arch-builders@v1.0.0
 with:
   path: 'my-custom-builder'
   base-image-uri: 'ttl.sh/my-custom-builder'
