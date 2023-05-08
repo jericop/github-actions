@@ -30,7 +30,7 @@ jobs:
           set -x
 
           for tag in $tags; do
-              image_tag="${{ needs.ttl-sh.outputs.uri }}:${tag}"
+              image_tag="${{ steps.image-uri.outputs.uri }}:${tag}"
               docker buildx build \
                   --platform linux/amd64,linux/arm64 \
                   --tag not-pushing-so-this-is-ignored \
