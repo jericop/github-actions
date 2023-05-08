@@ -151,15 +151,16 @@ runs:
 
       for tag in $tags; do
           local_image_tag="${local_image_uri}:\${tag}-\${arch_}"
+
           # This is a workaround because pack downloads the lifecycle binary for x86-64, even on arm64.
           # TODO: fix this
-          lifecycle_url="https://github.com/buildpacks/lifecycle/releases/download/${lifecycle_version}/lifecycle-${lifecycle_version}+linux.\${lifecycle_arch}.tgz"
-          cat "builder-\${tag}.toml" | yj -tj | jq ". + {lifecycle: {uri: \"\$lifecycle_url\"}}" | yj -jt > updated.toml
-          mv updated.toml "builder-\${tag}.toml"
-
-          pack builder create "\${local_image_tag}" --config "builder-\${tag}.toml" --publish
+          # lifecycle_url="https://github.com/buildpacks/lifecycle/releases/download/${lifecycle_version}/lifecycle-${lifecycle_version}+linux.\${lifecycle_arch}.tgz"
+          # cat "builder-\${tag}.toml" | yj -tj | jq ". + {lifecycle: {uri: \"\$lifecycle_url\"}}" | yj -jt > updated.toml
+          # mv updated.toml "builder-\${tag}.toml"
 
           if [ $(arch) = "aarch64" ]; then
+            pack builder create "\${local_image_tag}" --config "builder-\${tag}.toml"
+
             # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
             # so we need this workaround to fix the platform value for arm64 images
             # TODO: fix this
@@ -167,6 +168,8 @@ runs:
             docker pull -q "\${local_image_tag}"
             docker buildx build -q --platform linux/arm64 -t "\${local_image_tag}" --push .
             docker image rm "\${local_image_tag}"
+          else
+            pack builder create "\${local_image_tag}" --config "builder-\${tag}.toml" --publish
           fi
       done
 
