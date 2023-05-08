@@ -162,6 +162,7 @@ runs:
       RUN_EOF
       CREATE_ARCH_BUILDERS_DOCKERFILE_EOF
 
+      set -x
 
       # Create architecture-specific builders with pack (through buildx) and publish them to the local registry with pack.
       # The buildx `--push` flag is not used because pack pushes the images with the `--publish` flag
