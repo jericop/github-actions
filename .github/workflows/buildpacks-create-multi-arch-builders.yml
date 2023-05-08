@@ -92,7 +92,8 @@ jobs:
 
           pack version
 
-          for tag in ${{ needs.ttl-sh.outputs.tags }}; do
+          # test stack tag only
+          for tag in stack; do
 
             # Full support for targets withcout staks has not landed yet, so skipping test for it (missing run images)
             # TODO: this is because run images are not stored in builder metadata when not using stack
