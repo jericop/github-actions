@@ -51,10 +51,11 @@ runs:
       # Injected (or updated) in each builder-<tag>.toml file
       lifecycle_version=${{ inputs.lifecycle-version }}
 
-      registry_port=5000
-      local_registry_uri="localhost:$registry_port"
+      registry_hostname=$(echo $base_image_uri | cut -d/ -f1)
+      local_registry_port=5000
+      local_registry_uri="localhost:$local_registry_port"
       local_registry_pack="$local_registry_uri/pack"
-      local_image_uri="$local_registry_uri/$(echo $base_image_uri | git hash-object --stdin -w)"
+      local_image_uri=$(echo $base_image_uri | sed "s/$registry_hostname/$local_registry_uri/")
       buildx_builder=host-network
 
       # Build from releases by default
@@ -104,7 +105,7 @@ runs:
       docker run --rm arm64v8/alpine uname -a
 
       # Start local registry (if not already running)
-      docker container inspect registry > /dev/null 2>&1 || docker run -d -p $registry_port:$registry_port --restart=always --name registry registry:2
+      docker container inspect registry > /dev/null 2>&1 || docker run -d -p $local_registry_port:$local_registry_port --restart=always --name registry registry:2
 
       echo "Downloaded images"
       docker image ls
@@ -116,6 +117,7 @@ runs:
       docker buildx build \
           --tag $local_registry_pack \
           --platform linux/amd64,linux/arm64 \
+          --quiet \
           --push - <<PACK_EOF
       $build_pack_dockerfile
       PACK_EOF
@@ -133,6 +135,7 @@ runs:
 
       COPY *.toml ./
       RUN <<RUN_EOF
+      set -e
       set -x
 
       arch_=amd64
@@ -143,20 +146,23 @@ runs:
         lifecycle_arch=arm64
       fi
 
-      echo runtime.GOARCH
+      uname -a
       go-arch
-
-      echo pack version
       pack version
 
       for tag in $tags; do
-          # This is a workaround because pack downloads the lifecycle binary for x86-64, even on arm64.
-          # TODO: fix this
-          lifecycle_url="https://github.com/buildpacks/lifecycle/releases/download/${lifecycle_version}/lifecycle-${lifecycle_version}+linux.\${lifecycle_arch}.tgz"
-          cat "builder-\${tag}.toml" | yj -tj | jq ". + {lifecycle: {uri: \"\$lifecycle_url\"}}" | yj -jt > updated.toml
-          mv updated.toml "builder-\${tag}.toml"
+        local_image_tag="${local_image_uri}:\${tag}-\${arch_}"
+        builder_toml="builder-\${tag}.toml"
 
-          pack builder create "${local_image_uri}:\${tag}-\${arch_}" --config "builder-\${tag}.toml" --publish
+        # This is a workaround because pack downloads the lifecycle binary for x86-64, even on arm64.
+        # TODO: fix this
+        lifecycle_url="https://github.com/buildpacks/lifecycle/releases/download/${lifecycle_version}/lifecycle-${lifecycle_version}+linux.\${lifecycle_arch}.tgz"
+        cat \${builder_toml} | yj -tj | jq ". + {lifecycle: {uri: \"\$lifecycle_url\"}}" | yj -jt > updated.toml
+        mv updated.toml \${builder_toml}
+
+        # cat \${builder_toml}
+
+        pack builder create \${local_image_tag} --config \${builder_toml} --publish
       done
 
       RUN_EOF
@@ -178,37 +184,40 @@ runs:
       # Now we can create the multi-arch builders in the local registry using the architecture-specific builders created above
       # Ultimately the multi-arch builders in the local registry will be used to create the final multi-arch iamge in $base_image_uri.
       for tag in $tags; do
-          local_image_tag="${local_image_uri}:${tag}"
-          image_tag="${base_image_uri}:${tag}"
+        local_image_tag="${local_image_uri}:${tag}"
+        image_tag="${base_image_uri}:${tag}"
 
-          # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
-          # so we need this workaround to fix the platform value for arm64 images
-          docker pull -q "${local_image_tag}-arm64"
-          docker tag "${local_image_tag}-arm64" "${local_image_tag}-arm64-broken"
-          docker push "${local_image_tag}-arm64-broken"
-          echo "FROM ${local_image_tag}-arm64-broken" > Dockerfile
+        # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
+        # so we need this workaround to fix the platform value for arm64 images
+        if [ "$(crane config ${local_image_tag}-arm64 | jq .architecture -r)" = "amd64" ]; then
+          docker pull -q --platform linux/amd64 "${local_image_tag}-arm64"
+          docker tag "${local_image_tag}-arm64" "${local_image_tag}-arm64-invalid-arch"
+          docker inspect "${local_image_tag}-arm64-invalid-arch" | jq  '.[0].Architecture'
+          docker push "${local_image_tag}-arm64-invalid-arch"
+          docker image rm "${local_image_tag}-arm64"
+          echo "FROM ${local_image_tag}-arm64-invalid-arch" > Dockerfile
           docker build -q --platform linux/arm64 -t "${local_image_tag}-arm64" .
+          docker inspect "${local_image_tag}-arm64" | jq  '.[0].Architecture'
           docker push "${local_image_tag}-arm64"
+          crane config "${local_image_tag}-arm64" | jq .architecture
+        fi
 
-          # Create a multi-arch image in the local registry first
-          docker buildx imagetools create -t "${local_image_tag}" "${local_image_tag}-arm64" "${local_image_tag}-amd64"
-          docker buildx imagetools inspect "${local_image_tag}"
-          
-          if [ "${{ inputs.push }}" = "true" ]; then
-            # Create a dockerfile that pulls the multi-arch image from the local registry
-            # in order to create the multi-arch image in the desired registry
-            echo "FROM ${local_image_tag}" > multi-arch-builder.Dockerfile
-
-            docker buildx build \
-                --platform linux/arm64,linux/amd64 \
-                --tag "${image_tag}" \
-                --push \
-                --file multi-arch-builder.Dockerfile .
-            docker buildx imagetools inspect "${image_tag}"
-
-            rm multi-arch-builder.Dockerfile
-          fi
+        # Create a multi-arch image in the local registry first
+        docker buildx imagetools create -t "${local_image_tag}" "${local_image_tag}-arm64" "${local_image_tag}-amd64"
+        docker buildx imagetools inspect "${local_image_tag}"
+        
+        # Create a dockerfile that pulls the multi-arch image from the local registry
+        # in order to create the multi-arch image in the desired registry
+        echo "FROM ${local_image_tag}" > multi-arch-builder.Dockerfile
+        docker buildx build \
+          --platform linux/arm64,linux/amd64 \
+          --tag "${image_tag}" --push \
+          --file multi-arch-builder.Dockerfile .
+        docker buildx imagetools inspect "${image_tag}"
+        rm Dockerfile
       done
+
+      crane ls $local_image_uri
 
       echo "tags=$tags" >> $GITHUB_OUTPUT
       echo "local_registry_uri=$local_registry_uri" >> $GITHUB_OUTPUT
