@@ -38,16 +38,9 @@ jobs:
               docker buildx build \
                   --platform linux/amd64,linux/arm64 \
                   --tag not-pushing-so-this-is-ignored \
-                  - <<TEST-MULTI-ARCH-BUILDER-EOF
-          RUN <<RUN_EOF
-          set -x
-
-          arch
-
-          # Basic tests that verifies lifecycle binary works on this platform
-          docker run --rm ${image_tag} arch
-          docker run --rm ${image_tag} /cnb/lifecycle/lifecycle -version
-          RUN_EOF
-          TEST-MULTI-ARCH-BUILDER-EOF
+                  - <<TEST-DOCKERFILE-EOF
+          FROM ${image_tag}
+          RUN arch && /cnb/lifecycle/lifecycle -version
+          TEST-DOCKERFILE-EOF
 
           done
