@@ -15,7 +15,7 @@ inputs:
   lifecycle-version:
     description: 'The version of lifecycle to install.'
     required:    false
-    default:    'v0.17.0-pre.1'
+    default:    'v0.16.0'
   push:
     description: 'Push the multi-arch image(s) to `base-image-uri`.'
     required:    false
