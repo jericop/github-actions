@@ -40,7 +40,7 @@ jobs:
                   --tag not-pushing-so-this-is-ignored \
                   - <<TEST-DOCKERFILE-EOF
           FROM ${image_tag}
-          RUN arch && /cnb/lifecycle/lifecycle -version
+          RUN /cnb/lifecycle/lifecycle -version
           TEST-DOCKERFILE-EOF
 
           done
