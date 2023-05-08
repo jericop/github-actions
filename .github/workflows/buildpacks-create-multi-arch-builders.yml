@@ -28,7 +28,7 @@ jobs:
           #!/usr/bin/env bash -euo pipefail
 
           # Gets tag from builder toml files following naming pattern `builder-<tag>.toml`
-          tags=${{ steps.create-multi-arch-builders.outputs.tags }}
+          tags="${{ steps.create-multi-arch-builders.outputs.tags }}"
 
           set -x
 
