@@ -180,6 +180,7 @@ runs:
 
       rm create-arch-builders.Dockerfile
 
+      crane ls $local_image_uri
 
       # Now we can create the multi-arch builders in the local registry using the architecture-specific builders created above
       # Ultimately the multi-arch builders in the local registry will be used to create the final multi-arch iamge in $base_image_uri.
