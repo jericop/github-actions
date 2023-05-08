@@ -97,9 +97,6 @@ runs:
       )
       fi
 
-      # Create buildx builder with access to host network (if not already created)
-      docker buildx use $buildx_builder || docker buildx create --name $buildx_builder --driver-opt network=host --use
-
       # Start local registry (if not already running)
       docker container inspect registry > /dev/null 2>&1 || docker run -d -p $registry_port:$registry_port --restart=always --name registry registry:2
 
@@ -124,6 +121,7 @@ runs:
 
       COPY *.toml ./
       RUN <<RUN_EOF
+      set -x
 
       arch_=amd64
       lifecycle_arch=x86-64
