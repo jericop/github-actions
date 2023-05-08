@@ -30,4 +30,11 @@ with:
 | `base-image-uri` | The base registry uri, without tag, where the multi-arch builder image(s) will be pushed.
 | `pack-version` | Optional version of [`pack`](https://github.com/buildpacks/pack) to install. Defaults to `v0.30.0-pre1`.
 | `lifecycle-version` | Optional version of [`lifecycle`](https://github.com/buildpacks/lifecycle) to install. Defaults to `v0.17.0-pre.1`.
+| `push` | Optional boolean string to push the multi-arch image(s) to `base-image-uri`. Defaults to `true`.
+
+#### Outputs <!-- omit in toc -->
+| Parameter | Description
+| :-------- | :----------
+| `tags` | Space separated builder tags derived from `builder-<tag>.toml` in given `path`
+| `local-image-uri` | The local registry uri where multi-arch images are saved before being pushed to `base-image-uri`
 

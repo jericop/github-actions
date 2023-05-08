@@ -16,11 +16,24 @@ inputs:
     description: 'The version of lifecycle to install.'
     required:    false
     default:    'v0.17.0-pre.1'
+  push:
+    description: 'Push the multi-arch image(s) to `base-image-uri`.'
+    required:    false
+    default:    'true'
+
+outputs:
+  tags:
+    description: 'Space separated builder tags derived from `builder-<tag>.toml` in given `path`.'
+    value: ${{ steps.create-multi-arch-builders.outputs.tags }}
+  local-registry-uri:
+    description: 'The local registry uri where multi-arch images are saved before being pushed to `base-image-uri`'
+    value: ${{ steps.create-multi-arch-builders.outputs.local_registry_uri }}
 
 runs:
   using: "composite"
   steps:
-  - name:  Create Multi-arch Builders
+  - id: create-multi-arch-builders
+    name:  Create Multi-arch Builders
     shell: bash
     run:   |
       #!/usr/bin/env bash set -euo pipefail
@@ -83,8 +96,6 @@ runs:
       PACK_FROM_SOURCE_EOF
       )
       fi
-
-      echo "Creating multi-arch builder image $base_image_uri with the following tags: $tags"
 
       # Create buildx builder with access to host network (if not already created)
       docker buildx use $buildx_builder || docker buildx create --name $buildx_builder --driver-opt network=host --use
@@ -171,15 +182,21 @@ runs:
           docker buildx imagetools create -t "${local_image_tag}" "${local_image_tag}-arm64" "${local_image_tag}-amd64"
           docker buildx imagetools inspect "${local_image_tag}"
           
-          # Create a dockerfile that pulls the multi-arch image from the local registry
-          # in order to create the multi-arch image in the desired registry
-          echo "FROM ${local_image_tag}" > multi-arch-builder.Dockerfile
-          
-          docker buildx build \
-              --platform linux/arm64,linux/amd64 \
-              --tag "${image_tag}" --push \
-              --file multi-arch-builder.Dockerfile .
-          docker buildx imagetools inspect "${image_tag}"
-          
-          rm multi-arch-builder.Dockerfile
+          if [ "${{ inputs.push }}" = "true" ]; then
+            # Create a dockerfile that pulls the multi-arch image from the local registry
+            # in order to create the multi-arch image in the desired registry
+            echo "FROM ${local_image_tag}" > multi-arch-builder.Dockerfile
+
+            docker buildx build \
+                --platform linux/arm64,linux/amd64 \
+                --tag "${image_tag}" \
+                --push \
+                --file multi-arch-builder.Dockerfile .
+            docker buildx imagetools inspect "${image_tag}"
+
+            rm multi-arch-builder.Dockerfile
+          fi
       done
+
+      echo "tags=$tags" >> $GITHUB_OUTPUT
+      echo "local_registry_uri=$local_registry_uri" >> $GITHUB_OUTPUT

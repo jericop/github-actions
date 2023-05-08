@@ -18,7 +18,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
-      - uses: ./buildpacks/create-multi-arch-builders
+      - id: create-multi-arch-builders
+        uses: ./buildpacks/create-multi-arch-builders
         with:
           path: 'buildpacks/create-multi-arch-builders/testdata'
           base-image-uri: ${{ needs.ttl-sh.outputs.uri }}
@@ -26,10 +27,8 @@ jobs:
         run: |
           #!/usr/bin/env bash -euo pipefail
 
-          cd buildpacks/create-multi-arch-builders/testdata
-
           # Gets tag from builder toml files following naming pattern `builder-<tag>.toml`
-          tags=$(ls *.toml | xargs -n1 | cut -d- -f2 | cut -d. -f1 | xargs)
+          tags="${{ steps.create-multi-arch-builders.outputs.tags }}"
 
           set -x
 
