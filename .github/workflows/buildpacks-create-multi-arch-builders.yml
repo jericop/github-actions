@@ -19,7 +19,7 @@ jobs:
         uses: ./buildpacks/create-multi-arch-builders
         with:
           path: 'buildpacks/create-multi-arch-builders/testdata'
-          base-image-uri: ${{ needs.ttl-sh.outputs.uri }}
+          base-image-uri: ${{ steps.image-uri.outputs.uri }}
       - name: Test lifecycle
         run: |
           #!/usr/bin/env bash -euo pipefail
