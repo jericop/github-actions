@@ -195,6 +195,7 @@ runs:
           extracted="${tag}-invalid-arch"
           updated_tarfile="${tag}-updated-arch.tar"
 
+          docker pull -q ${local_image_tag}-arm64
           docker save ${local_image_tag}-arm64 -o $tarfile
 
           mkdir -p $extracted
