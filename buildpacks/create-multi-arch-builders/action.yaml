@@ -226,7 +226,7 @@ runs:
           --tag "${image_tag}" --push \
           --file multi-arch-builder.Dockerfile .
         docker buildx imagetools inspect "${image_tag}"
-        rm Dockerfile
+        rm multi-arch-builder.Dockerfile
       done
 
       crane ls $local_image_uri
