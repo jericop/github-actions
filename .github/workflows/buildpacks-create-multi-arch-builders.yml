@@ -92,6 +92,8 @@ jobs:
 
           cd ..
 
+          uname -a
+          arch
           pack version
 
           # test stack tag only
@@ -106,8 +108,9 @@ jobs:
             builder_image_tag="${base_image_uri}:${tag}"
 
             # Verify lifecycle binary works on this platform
-            docker run --rm "${builder_image_tag}" arch
+            docker pull -q "${builder_image_tag}"
             docker run --rm "${builder_image_tag}" /cnb/lifecycle/lifecycle -version
+            docker run --rm "${builder_image_tag}" arch
 
             # Build an app with the the multi-arch builder
             pack build "sample-bash-script-app:${tag}" --builder "${builder_image_tag}"
