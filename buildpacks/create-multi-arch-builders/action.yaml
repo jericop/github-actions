@@ -1,0 +1,185 @@
+name:        'Create Multi-arch Builders'
+description: 'Creates multi-arch builders using buildx. Requires docker/setup-qemu-action@v2 first'
+
+inputs:
+  path:
+    description: 'The path containing the `builder-<tag>.toml` file(s).'
+    required:    true
+  base-image-uri:
+    description: 'The base registry uri, without tag, where the multi-arch builder image(s) will be pushed.'
+    required:    true
+  pack-version:
+    description: 'The version of pack to install.'
+    required:    false
+    default:    'v0.30.0-pre1'
+  lifecycle-version:
+    description: 'The version of lifecycle to install.'
+    required:    false
+    default:    'v0.17.0-pre.1'
+
+runs:
+  using: "composite"
+  steps:
+  - name:  Create Multi-arch Builders
+    shell: bash
+    run:   |
+      #!/usr/bin/env bash set -euo pipefail
+
+      cd ${{ inputs.path }}
+
+      base_image_uri=${{ inputs.base-image-uri }}
+
+      # Gets tag from builder toml files following naming pattern `builder-<tag>.toml`
+      tags=$(ls *.toml | xargs -n1 | cut -d- -f2 | cut -d. -f1 | xargs)
+
+      # Used for installing pack from releases
+      pack_version=${{ inputs.pack-version }}
+
+      # Injected (or updated) in each builder-<tag>.toml file
+      lifecycle_version=${{ inputs.lifecycle-version }}
+
+      registry_port=5000
+      local_registry_uri="localhost:$registry_port"
+      local_registry_pack="$local_registry_uri/pack"
+      local_image_uri="$local_registry_uri/$(echo $base_image_uri | md5)"
+      buildx_builder=host-network
+
+      # Build from releases by default
+      build_pack_from_releases_dockerfile_replace=$(cat <<'PACK_FROM_RELEASES_EOF'
+      FROM curlimages/curl
+      USER root
+      RUN <<RUN_EOF
+      VERSION="REPLACE_PACK_VERSION"
+      TAR_FILENAME="pack-${VERSION}-linux.tgz"
+      RELEASES_BASE_URL="https://github.com/buildpacks/pack/releases/download"
+
+      if [ $(arch) = "aarch64" ]; then
+      TAR_FILENAME="pack-${VERSION}-linux-arm64.tgz"
+      fi
+
+      curl -fsSL -O "${RELEASES_BASE_URL}/${VERSION}/${TAR_FILENAME}"
+      tar -C /usr/local/bin/ --no-same-owner -xzv -f "$TAR_FILENAME" pack
+      rm $TAR_FILENAME
+      RUN_EOF
+
+      ENTRYPOINT ["/usr/local/bin/pack"]
+      PACK_FROM_RELEASES_EOF
+      )
+      build_pack_dockerfile=$(echo "$build_pack_from_releases_dockerfile_replace" | sed "s/REPLACE_PACK_VERSION/$pack_version/")
+
+      # Or build from source if PACK_REPO_URI and PACK_REPO_BRANCH environment variables have been set
+      if [[ ! -z "${PACK_REPO_URI:-}" && ! -z "${PACK_REPO_BRANCH:-}" ]]; then
+      # can't indent because of heredoc
+      build_pack_dockerfile=$(cat <<PACK_FROM_SOURCE_EOF
+      FROM golang:1.19 as builder
+      WORKDIR /workspace/pack
+      RUN git clone $PACK_REPO_URI /workspace/pack && git checkout $PACK_REPO_BRANCH
+      RUN make mod-tidy build
+
+      FROM ubuntu:jammy
+      RUN apt-get update && apt-get install -y ca-certificates
+      COPY --from=builder /workspace/pack/out/pack /usr/local/bin/pack
+      ENTRYPOINT ["/usr/local/bin/pack"]
+      PACK_FROM_SOURCE_EOF
+      )
+      fi
+
+      echo "Creating multi-arch builder image $base_image_uri with the following tags: $tags"
+
+      # Create buildx builder with access to host network (if not already created)
+      docker buildx use $buildx_builder || docker buildx create --name $buildx_builder --driver-opt network=host --use
+
+      # Start local registry (if not already running)
+      docker container inspect registry > /dev/null 2>&1 || docker run -d -p $registry_port:$registry_port --restart=always --name registry registry:2
+
+      # Create custom multi-arch pack image because the `buildpacksio/pack` image does not contain stand-alone binary
+      docker buildx build \
+          --tag $local_registry_pack \
+          --platform linux/amd64,linux/arm64 \
+          --push - <<PACK_EOF
+      $build_pack_dockerfile
+      PACK_EOF
+
+      # Write dockerfile for creating architecture-specific builders
+      # This is needed in order to copy the toml files into the container at build time
+      cat <<CREATE_ARCH_BUILDERS_DOCKERFILE_EOF > create-arch-builders.Dockerfile
+      FROM ghcr.io/jericop/go-arch as go-arch
+      FROM $local_registry_pack as pack
+
+      FROM ghcr.io/jericop/build-jammy
+      USER root
+      COPY --from=go-arch /usr/local/bin/go-arch /usr/local/bin/go-arch
+      COPY --from=pack /usr/local/bin/pack /usr/local/bin/pack
+
+      COPY *.toml ./
+      RUN <<RUN_EOF
+
+      arch_=amd64
+      lifecycle_arch=x86-64
+
+      if [ \$(arch) = "aarch64" ]; then
+        arch_=arm64
+        lifecycle_arch=arm64
+      fi
+
+      echo runtime.GOARCH
+      go-arch
+
+      echo pack version
+      pack version
+
+      for tag in $tags; do
+          # This is a workaround because pack downloads the lifecycle binary for x86-64, even on arm64.
+          # TODO: fix this
+          lifecycle_url="https://github.com/buildpacks/lifecycle/releases/download/${lifecycle_version}/lifecycle-${lifecycle_version}+linux.\${lifecycle_arch}.tgz"
+          cat "builder-\${tag}.toml" | yj -tj | jq ". + {lifecycle: {uri: \"\$lifecycle_url\"}}" | yj -jt > updated.toml
+          mv updated.toml "builder-\${tag}.toml"
+
+          pack builder create "${local_image_uri}:\${tag}-\${arch_}" --config "builder-\${tag}.toml" --publish
+      done
+
+      RUN_EOF
+      CREATE_ARCH_BUILDERS_DOCKERFILE_EOF
+
+
+      # Create architecture-specific builders with pack (through buildx) and publish them to the local registry with pack.
+      # The buildx `--push` flag is not used because pack pushes the images with the `--publish` flag
+      docker buildx build \
+          --platform linux/amd64,linux/arm64 \
+          --tag not-pushing-with-buildx-so-this-is-ignored \
+          --progress plain \
+          --file create-arch-builders.Dockerfile .
+
+      rm create-arch-builders.Dockerfile
+
+
+      # Now we can create the multi-arch builders in the local registry using the architecture-specific builders created above
+      # Ultimately the multi-arch builders in the local registry will be used to create the final multi-arch iamge in $base_image_uri.
+      for tag in $tags; do
+          local_image_tag="${local_image_uri}:${tag}"
+          image_tag="${base_image_uri}:${tag}"
+
+          # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
+          # so we need this workaround to fix the platform value for arm64 images
+          # TODO: fix this
+          echo "FROM ${local_image_tag}-arm64" > Dockerfile
+          docker pull -q "${local_image_tag}-arm64"
+          docker buildx build -q --platform linux/arm64 -t "${local_image_tag}-arm64" --push .
+          docker image rm "${local_image_tag}-arm64"
+
+          # Create a multi-arch image in the local registry first
+          docker buildx imagetools create -t "${local_image_tag}" "${local_image_tag}-arm64" "${local_image_tag}-amd64"
+          docker buildx imagetools inspect "${local_image_tag}"
+          
+          # Create a dockerfile that pulls the multi-arch image from the local registry
+          # in order to create the multi-arch image in the desired registry
+          echo "FROM ${local_image_tag}" > multi-arch-builder.Dockerfile
+          
+          docker buildx build \
+              --platform linux/arm64,linux/amd64 \
+              --tag "${image_tag}" --push \
+              --file multi-arch-builder.Dockerfile .
+          docker buildx imagetools inspect "${image_tag}"
+          
+          rm multi-arch-builder.Dockerfile
+      done
