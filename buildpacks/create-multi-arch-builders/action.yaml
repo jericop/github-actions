@@ -188,26 +188,31 @@ runs:
         local_image_tag="${local_image_uri}:${tag}"
         image_tag="${base_image_uri}:${tag}"
 
-        # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
-        # so we need this workaround to fix the platform value for arm64 images
+        # As of pack version 0.30.0-pre1 publishing with `--publish` will always use the linux/amd64 image,
+        # even on arm64. This rebases the amd64 layers with the arm64 layers so binaries will work on arm64.
         if [ "$(crane config ${local_image_tag}-arm64 | jq .architecture -r)" = "amd64" ]; then
           crane config "${local_image_tag}-arm64" | jq .architecture
           crane ls "${local_image_uri}"
 
           build_image=""
           if cat "builder-${tag}.toml" | grep build-image; then
-              build_image=$(cat builder-${tag}.toml | yj -tj | jq '.stack["build-image"]' -r)
+            build_image=$(cat builder-${tag}.toml | yj -tj | jq '.stack["build-image"]' -r)
           else
-              build_image=$(cat builder-${tag}.toml | yj -tj | jq .build.image -r)
+            build_image=$(cat builder-${tag}.toml | yj -tj | jq .build.image -r)
           fi
+
+          crane manifest $build_image | jq '.manifests| map(select(.platform.os=="linux")) | map({(.platform.architecture|tostring): .digest}) | add' > manifest-arch.json
+          build_image_amd64="$(echo $build_image | cut -d: -f1)@$(cat manifest-arch.json | jq .amd64 -r)"
+          build_image_arm64="$(echo $build_image | cut -d: -f1)@$(cat manifest-arch.json | jq .arm64 -r)"
+          cat manifest-arch.json && rm manifest-arch.json
 
           crane ls "$(echo $build_image | cut -d: -f1)"
 
           crane rebase "${local_image_tag}-arm64" \
-              --platform linux/arm64 \
-              --old_base "${build_image}-amd64" \
-              --new_base "${build_image}-arm64" \
-              --tag "${local_image_tag}-arm64"
+            --platform linux/arm64 \
+            --old_base "${build_image_amd64}" \
+            --new_base "${build_image_arm64}" \
+            --tag "${local_image_tag}-arm64"
 
           crane config "${local_image_tag}-arm64" | jq .architecture
         fi
