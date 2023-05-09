@@ -191,27 +191,25 @@ runs:
         # As of pack version 0.30.0-pre1 publishing with `--publish` will set the platform to linux/amd64 on arm64,
         # so we need this workaround to fix the platform value for arm64 images
         if [ "$(crane config ${local_image_tag}-arm64 | jq .architecture -r)" = "amd64" ]; then
-          tarfile="${tag}-invalid-arch.tar"
-          extracted="${tag}-invalid-arch"
-          updated_tarfile="${tag}-updated-arch.tar"
-
-          docker pull --platform linux/amd64 -q ${local_image_tag}-arm64
-          docker save ${local_image_tag}-arm64 -o $tarfile
-
-          mkdir -p $extracted
-          tar -C $extracted -xf $tarfile
-          cd $extracted
-          config_json="$(cat manifest.json | jq '.[0].Config' -r)"
-          cat $config_json | jq '. += {architecture: "arm64"}' > arm64.json
-          mv arm64.json $config_json
-          cd ..
-          tar -C $extracted -cf $updated_tarfile $(ls $extracted)
-
-          docker load -i $updated_tarfile
-          docker inspect "${local_image_tag}-arm64" | jq  '.[0].Architecture'
-          docker push -q "${local_image_tag}-arm64"
           crane config "${local_image_tag}-arm64" | jq .architecture
-          rm -rf $extracted $tarfile $updated_tarfile
+          crane ls "${local_image_uri}"
+
+          build_image=""
+          if cat "builder-${tag}.toml" | grep build-image; then
+              build_image=$(cat builder-${tag}.toml | yj -tj | jq '.stack["build-image"]' -r)
+          else
+              build_image=$(cat builder-${tag}.toml | yj -tj | jq .build.image -r)
+          fi
+
+          crane ls "$(echo $build_image | cut -d: -f1)"
+
+          crane rebase "${local_image_tag}-arm64" \
+              --platform linux/arm64 \
+              --old_base "${build_image}-amd64" \
+              --new_base "${build_image}-arm64" \
+              --tag "${local_image_tag}-arm64"
+
+          crane config "${local_image_tag}-arm64" | jq .architecture
         fi
 
         # Create a multi-arch image in the local registry first
