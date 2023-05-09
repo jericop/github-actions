@@ -29,7 +29,7 @@ with:
 | `path` | The path containing the `builder-<tag>.toml` file(s).
 | `base-image-uri` | The base registry uri, without tag, where the multi-arch builder image(s) will be pushed.
 | `pack-version` | Optional version of [`pack`](https://github.com/buildpacks/pack) to install. Defaults to `v0.30.0-pre1`.
-| `lifecycle-version` | Optional version of [`lifecycle`](https://github.com/buildpacks/lifecycle) to install. Defaults to `v0.17.0-pre.1`.
+| `lifecycle-version` | Optional version of [`lifecycle`](https://github.com/buildpacks/lifecycle) to install. Defaults to `v0.16.0`.
 | `push` | Optional boolean string to push the multi-arch image(s) to `base-image-uri`. Defaults to `true`.
 
 #### Outputs <!-- omit in toc -->

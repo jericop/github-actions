@@ -8,22 +8,20 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       uri: ${{ steps.image-uri.outputs.uri }}
-    steps:
-      - id: image-uri
-        run: echo "uri=ttl.sh/${{ github.repository }}/$(cat /proc/sys/kernel/random/uuid)" >> $GITHUB_OUTPUT
-  test:
-    runs-on: ubuntu-22.04
-    needs: [ttl-sh]
+      tags: ${{ steps.create-multi-arch-builders.outputs.tags }}
     steps:
       - uses: actions/checkout@v3
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
+      - uses: jericop/buildpacks-github-actions/setup-tools@add-arm64-support
+      - id: image-uri
+        run: echo "uri=ttl.sh/${{ github.repository }}/$(cat /proc/sys/kernel/random/uuid)" >> $GITHUB_OUTPUT
       - id: create-multi-arch-builders
         uses: ./buildpacks/create-multi-arch-builders
         with:
           path: 'buildpacks/create-multi-arch-builders/testdata'
-          base-image-uri: ${{ needs.ttl-sh.outputs.uri }}
-      - name: Test mulit-arch builders
+          base-image-uri: ${{ steps.image-uri.outputs.uri }}
+      - name: Test lifecycle
         run: |
           #!/usr/bin/env bash -euo pipefail
 
@@ -33,13 +31,87 @@ jobs:
           set -x
 
           for tag in $tags; do
-              image_tag="${{ needs.ttl-sh.outputs.uri }}:${tag}"
+              image_tag="${{ steps.image-uri.outputs.uri }}:${tag}"
               docker buildx build \
                   --platform linux/amd64,linux/arm64 \
                   --tag not-pushing-so-this-is-ignored \
+                  --progress plain \
                   - <<TEST-DOCKERFILE-EOF
+          FROM ghcr.io/jericop/go-arch as go-arch
           FROM ${image_tag}
+          USER root
+          COPY --from=go-arch /usr/local/bin/go-arch /usr/local/bin/go-arch
+          RUN uname -a
+          RUN arch
+          RUN go-arch
           RUN /cnb/lifecycle/lifecycle -version
           TEST-DOCKERFILE-EOF
 
+          done
+
+  app-build-test:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, buildjet-4vcpu-ubuntu-2204-arm]
+    runs-on: ${{ matrix.os }}
+    needs: ttl-sh
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jericop/buildpacks-github-actions/setup-pack@add-arm64-support
+        with:
+          pack-version: 0.30.0-pre1
+      - uses: jericop/buildpacks-github-actions/setup-tools@add-arm64-support
+      - name: Build test app
+        shell: bash
+        run: |
+          #!/usr/bin/env bash -euo pipefail
+
+          set -x
+
+          base_image_uri=${{ needs.ttl-sh.outputs.uri }}
+
+          if [[ ! -d samples ]]; then git clone https://github.com/buildpacks/samples.git; fi
+
+          cd samples/apps/bash-script/bash-script-buildpack
+          mv buildpack.toml original.toml
+
+          cat original.toml
+
+          # Allow any stack to be used and add targets
+          cat original.toml | yj -tj | jq '. + {stacks: [{id: "*"}]} + {targets:[{os: "linux", arch: "amd64"}, {os: "linux", arch: "arm64"}]}' | yj -jt > buildpack.toml
+          rm original.toml
+
+          cat buildpack.toml
+
+          # Print env to see CNB_TARGET environment variables
+          # As outlined here: https://github.com/buildpacks/spec/pull/336/files
+          if ! grep -q ^env$ bin/build ; then
+            echo "echo \"Environment variables set during the build\"" >> bin/build
+            echo "env" >> bin/build
+          fi
+
+          cd ..
+
+          uname -a
+          arch
+          pack version
+
+          # test stack tag only
+          for tag in stack; do
+
+            # Full support for targets withcout staks has not landed yet, so skipping test for it (missing run images)
+            # TODO: this is because run images are not stored in builder metadata when not using stack
+            if [ "$tag" = "target" ]; then
+              continue
+            fi
+
+            builder_image_tag="${base_image_uri}:${tag}"
+
+            # Verify lifecycle binary works on this platform
+            docker pull -q "${builder_image_tag}"
+            docker run --rm "${builder_image_tag}" /cnb/lifecycle/lifecycle -version
+            docker run --rm "${builder_image_tag}" arch
+
+            # Build an app with the the multi-arch builder
+            pack build "sample-bash-script-app:${tag}" --builder "${builder_image_tag}"
           done
