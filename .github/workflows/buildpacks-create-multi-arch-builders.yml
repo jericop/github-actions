@@ -57,10 +57,11 @@ jobs:
     needs: ttl-sh
     steps:
       - uses: actions/checkout@v3
-      - uses: jericop/buildpacks-github-actions/setup-pack@add-arm64-support
+      - uses: buildpacks/github-actions/setup-pack@v5.2.0
         with:
-          pack-version: 0.30.0-pre1
-      - uses: jericop/buildpacks-github-actions/setup-tools@add-arm64-support
+          # omit "v" from pack version (tag name)
+          pack-version: 0.30.0-pre2
+      - uses: buildpacks/github-actions/setup-tools@v5.2.0
       - name: Build test app
         shell: bash
         run: |
@@ -98,12 +99,6 @@ jobs:
 
           # test stack tag only
           for tag in stack; do
-
-            # Full support for targets withcout staks has not landed yet, so skipping test for it (missing run images)
-            # TODO: this is because run images are not stored in builder metadata when not using stack
-            if [ "$tag" = "target" ]; then
-              continue
-            fi
 
             builder_image_tag="${base_image_uri}:${tag}"
 
