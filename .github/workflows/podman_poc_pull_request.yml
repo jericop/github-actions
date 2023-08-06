@@ -18,11 +18,14 @@ jobs:
           sudo apt-get install -y qemu-user qemu-user-binfmt qemu-system-x86 qemu-system-arm
           sudo apt-get install -y podman
 
-          arm64_coreos_archive_name=fedora-coreos-38.20230709.3.0-qemu.aarch64.qcow2.xz
-          curl -O https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/38.20230709.3.0/aarch64/$arm64_coreos_archive_name
+          # gvproxy is required to start arm64 podman machine
+          curl -L -o /usr/libexec/podman/gvproxy https://github.com/containers/gvisor-tap-vsock/releases/download/v0.7.0/gvproxy-linux
+          chmod +x /usr/libexec/podman/gvproxy
 
           podman machine ls
-          podman machine init --image-path $arm64_coreos_archive_name arm64
+          arm64_coreos_archive_filename=fedora-coreos-38.20230709.3.0-qemu.aarch64.qcow2.xz
+          curl -O https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/38.20230709.3.0/aarch64/$arm64_coreos_archive_filename
+          podman machine init --image-path $arm64_coreos_archive_filename arm64
           podman system connection default arm64
           podman machine start arm64
           podman machine ls
