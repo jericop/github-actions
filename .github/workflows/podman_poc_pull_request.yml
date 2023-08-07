@@ -8,8 +8,16 @@ jobs:
       - uses: docker/setup-qemu-action@v2
       - id: install-podman
         run: |
+          set -x
           sudo apt update
           sudo apt upgrade -y
+
+          # https://github.com/orgs/community/discussions/8305
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get install -y libvirt-clients libvirt-daemon-system libvirt-daemon virtinst bridge-utils qemu qemu-system-x86
+          sudo usermod -a -G kvm,libvirt $USER
 
           # sudo apt install -y libvirt-daemon
           # sudo systemctl enable libvirtd
