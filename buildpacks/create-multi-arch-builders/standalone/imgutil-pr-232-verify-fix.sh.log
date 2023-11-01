@@ -1,0 +1,261 @@
+Creating multi-arch builder from TOML file 'example-builder.toml'...
+Cloning into '/var/folders/sd/l4j9q6l96bngknrk2xvdhjyh0000gq/T//create-multi-arch-builders/pack'...
+remote: Enumerating objects: 33236, done.
+remote: Counting objects: 100% (4679/4679), done.
+remote: Compressing objects: 100% (608/608), done.
+remote: Total 33236 (delta 4403), reused 4128 (delta 4071), pack-reused 28557
+Receiving objects: 100% (33236/33236), 42.04 MiB | 5.84 MiB/s, done.
+Resolving deltas: 100% (21288/21288), done.
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+Already up to date.
+branch 'imgutil-default-platform-change-test' set up to track 'origin/imgutil-default-platform-change-test'.
+Switched to a new branch 'imgutil-default-platform-change-test'
+Already up to date.
+Building pack binary for localhost:5000/pack-1698858777-amd64 with: GOOS=linux GOARCH=amd64
+go mod tidy  -compat=1.20
+cd tools && go mod tidy -compat=1.20
+mkdir out/tests || (exit 0)
+=====> Building...
+go build -ldflags "-s -w -X 'github.com/buildpacks/pack.Version=0.0.0+git-44d1d89' -extldflags " -trimpath -o ./out/pack -a ./cmd/pack
+[+] Building 32.2s (7/7) FINISHED                                                                                                                  docker-container:host-network
+ => [internal] load build definition from Dockerfile                                                                                                                        0.0s
+ => => transferring dockerfile: 139B                                                                                                                                        0.0s
+ => [internal] load metadata for ghcr.io/jericop/build-jammy:latest                                                                                                         1.5s
+ => [internal] load .dockerignore                                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                             0.0s
+ => [internal] load build context                                                                                                                                           1.3s
+ => => transferring context: 24.67MB                                                                                                                                        1.2s
+ => [1/2] FROM ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296                                                  28.8s
+ => => resolve ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296                                                   0.0s
+ => => sha256:87d4ecfab05c95d21c662274b2d77bfec215117c3e5580cdd123f644f7649a18 34.02MB / 34.02MB                                                                           27.1s
+ => => sha256:dbf6a9befcdeecbb8813406afbd62ce81394e3869d84599f19f941aa5c74f3d1 29.53MB / 29.53MB                                                                           26.8s
+ => => sha256:892b40bf4c25170e593c2c28bff84350836f0f942ba1fbe7ef3764d57911c55f 4.31kB / 4.31kB                                                                              0.4s
+ => => extracting sha256:dbf6a9befcdeecbb8813406afbd62ce81394e3869d84599f19f941aa5c74f3d1                                                                                   1.4s
+ => => extracting sha256:892b40bf4c25170e593c2c28bff84350836f0f942ba1fbe7ef3764d57911c55f                                                                                   0.0s
+ => => extracting sha256:87d4ecfab05c95d21c662274b2d77bfec215117c3e5580cdd123f644f7649a18                                                                                   0.5s
+ => [2/2] COPY out/pack /usr/local/bin/pack                                                                                                                                 0.3s
+ => exporting to image                                                                                                                                                      1.5s
+ => => exporting layers                                                                                                                                                     1.0s
+ => => exporting manifest sha256:7fc526996fc90ec12343260e5f5f15bfe0ccd001da4b9db16ee1a2a60ddc331c                                                                           0.0s
+ => => exporting config sha256:43330f6ca3f9c3bea2eed0f13b13f5addbe3ef7edf528131fce964c84edb2b71                                                                             0.0s
+ => => exporting attestation manifest sha256:4aa7f0e0df729de21aa00769c7fea554262c1cdc87c86401cd81f0bb36558c14                                                               0.0s
+ => => exporting manifest list sha256:3f9c97f41afd3760a24437a142c8af2e5e33e0057f9039745485c171a4516c5d                                                                      0.0s
+ => => pushing layers                                                                                                                                                       0.3s
+ => => pushing manifest for localhost:5000/pack-1698858777-amd64:latest@sha256:3f9c97f41afd3760a24437a142c8af2e5e33e0057f9039745485c171a4516c5d                             0.1s
+Building pack binary for localhost:5000/pack-1698858777-arm64 with: GOOS=linux GOARCH=arm64
+go mod tidy  -compat=1.20
+cd tools && go mod tidy -compat=1.20
+=====> Building...
+go build -ldflags "-s -w -X 'github.com/buildpacks/pack.Version=0.0.0+git-44d1d89' -extldflags " -trimpath -o ./out/pack -a ./cmd/pack
+[+] Building 17.8s (7/7) FINISHED                                                                                                                  docker-container:host-network
+ => [internal] load build definition from Dockerfile                                                                                                                        0.0s
+ => => transferring dockerfile: 139B                                                                                                                                        0.0s
+ => [internal] load metadata for ghcr.io/jericop/build-jammy:latest                                                                                                         1.1s
+ => [internal] load .dockerignore                                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                             0.0s
+ => [internal] load build context                                                                                                                                           0.5s
+ => => transferring context: 23.27MB                                                                                                                                        0.5s
+ => [1/2] FROM ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296                                                  10.8s
+ => => resolve ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296                                                   0.0s
+ => => sha256:34201e6cfcb9ee1299a521d2344573646dafd1f3a639f21418ded41e4341f333 32.49MB / 32.49MB                                                                            2.2s
+ => => sha256:6915365bb04c85203110f09bf55a62878b49a04b90afebe52f26cc6a29ba6fc9 4.32kB / 4.32kB                                                                              0.1s
+ => => sha256:79d0ea7dc1a848165a31e288cada1fa51dcd9bf302a305fe83a353c5c407110b 27.35MB / 27.35MB                                                                            9.1s
+ => => extracting sha256:79d0ea7dc1a848165a31e288cada1fa51dcd9bf302a305fe83a353c5c407110b                                                                                   1.2s
+ => => extracting sha256:6915365bb04c85203110f09bf55a62878b49a04b90afebe52f26cc6a29ba6fc9                                                                                   0.0s
+ => => extracting sha256:34201e6cfcb9ee1299a521d2344573646dafd1f3a639f21418ded41e4341f333                                                                                   0.5s
+ => [2/2] COPY out/pack /usr/local/bin/pack                                                                                                                                 0.9s
+ => exporting to image                                                                                                                                                      4.9s
+ => => exporting layers                                                                                                                                                     1.5s
+ => => exporting manifest sha256:6ed096bd01acdf8656325b8e747e4138cf70308068c38acff481898a33c1340a                                                                           0.0s
+ => => exporting config sha256:4243627ec3087732c894e522450508915b1cab934bc669d0a10677794317cb62                                                                             0.0s
+ => => exporting attestation manifest sha256:30580b565fa5da12f751afa2d3d4d148c3acbf3cd7c979e8e015a842f4af4d9b                                                               0.0s
+ => => exporting manifest list sha256:b1fbf2de2413022b3d8481de98031c9c88e8dab7260e2be00a40b07446d416b1                                                                      0.0s
+ => => pushing layers                                                                                                                                                       3.3s
+ => => pushing manifest for localhost:5000/pack-1698858777-arm64:latest@sha256:b1fbf2de2413022b3d8481de98031c9c88e8dab7260e2be00a40b07446d416b1                             0.1s
+[+] Building 0.6s (1/1) FINISHED                                                                                                                                                 
+ => [internal] pushing localhost:5000/pack-1698858777                                                                                                                       0.6s
+2023/11/01 13:14:46 existing manifest: sha256:7fc526996fc90ec12343260e5f5f15bfe0ccd001da4b9db16ee1a2a60ddc331c                                                                   
+2023/11/01 13:14:46 existing manifest: sha256:6ed096bd01acdf8656325b8e747e4138cf70308068c38acff481898a33c1340a                                                                   
+2023/11/01 13:14:46 localhost:5000/pack-1698858777: digest: sha256:e725737c54c09e3b5804b709e3110677b1b03f2ed7622ad48d38a1613f71a79a size: 493                                    
+localhost:5000/pack-1698858777@sha256:e725737c54c09e3b5804b709e3110677b1b03f2ed7622ad48d38a1613f71a79a
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 1056,
+      "digest": "sha256:7fc526996fc90ec12343260e5f5f15bfe0ccd001da4b9db16ee1a2a60ddc331c",
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 1056,
+      "digest": "sha256:6ed096bd01acdf8656325b8e747e4138cf70308068c38acff481898a33c1340a",
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    }
+  ]
+}
++ docker buildx build --platform linux/amd64,linux/arm64 --tag not-pushing-so-ignored --progress plain --file create-arch-builders.Dockerfile .
+#0 building with "host-network" instance using docker-container driver
+
+#1 [internal] load build definition from create-arch-builders.Dockerfile
+#1 transferring dockerfile: 462B 0.0s done
+#1 DONE 0.0s
+
+#2 [linux/amd64 internal] load metadata for localhost:5000/pack-1698858777:latest
+#2 ...
+
+#3 [linux/arm64 internal] load metadata for localhost:5000/pack-1698858777:latest
+#3 DONE 0.5s
+
+#4 [linux/amd64 internal] load metadata for ghcr.io/jericop/build-jammy:latest
+#4 DONE 0.5s
+
+#5 [linux/arm64 internal] load metadata for ghcr.io/jericop/build-jammy:latest
+#5 DONE 0.5s
+
+#2 [linux/amd64 internal] load metadata for localhost:5000/pack-1698858777:latest
+#2 DONE 0.5s
+
+#6 [internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [linux/amd64 stage-1 1/4] FROM ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296
+#7 resolve ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296 0.0s done
+#7 DONE 0.0s
+
+#8 [linux/arm64 stage-1 1/4] FROM ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296
+#8 resolve ghcr.io/jericop/build-jammy:latest@sha256:d2321e90fe65a4790917e56c5bf590d8d403cfb02ae62ac6e7efb4cf1fe7e296 0.0s done
+#8 DONE 0.0s
+
+#9 [linux/amd64 pack 1/1] FROM localhost:5000/pack-1698858777:latest@sha256:e725737c54c09e3b5804b709e3110677b1b03f2ed7622ad48d38a1613f71a79a
+#9 resolve localhost:5000/pack-1698858777:latest@sha256:e725737c54c09e3b5804b709e3110677b1b03f2ed7622ad48d38a1613f71a79a 0.0s done
+#9 DONE 0.0s
+
+#10 [linux/arm64 pack 1/1] FROM localhost:5000/pack-1698858777:latest@sha256:e725737c54c09e3b5804b709e3110677b1b03f2ed7622ad48d38a1613f71a79a
+#10 resolve localhost:5000/pack-1698858777:latest@sha256:e725737c54c09e3b5804b709e3110677b1b03f2ed7622ad48d38a1613f71a79a 0.0s done
+#10 DONE 0.1s
+
+#11 [internal] load build context
+#11 transferring context: 468B done
+#11 DONE 0.0s
+
+#12 [linux/amd64 stage-1 2/4] COPY --from=pack /usr/local/bin/pack /usr/local/bin/pack
+#12 CACHED
+
+#13 [linux/arm64 stage-1 2/4] COPY --from=pack /usr/local/bin/pack /usr/local/bin/pack
+#13 CACHED
+
+#14 [linux/amd64 stage-1 3/4] COPY *.toml ./
+#14 DONE 0.0s
+
+#15 [linux/arm64 stage-1 3/4] COPY *.toml ./
+#15 DONE 0.0s
+
+#16 [linux/arm64 stage-1 4/4] RUN <<RUN_EOF (arch=amd64...)
+#16 0.956 + arch
+#16 1.009 aarch64
+#16 1.013 + uname -a
+#16 1.053 Linux buildkitsandbox 6.3.13-linuxkit #1 SMP PREEMPT_DYNAMIC Thu Sep  7 07:54:49 UTC 2023 aarch64 aarch64 aarch64 GNU/Linux
+#16 1.057 + pack version
+#16 3.768 0.0.0+git-44d1d89
+#16 3.786 + pack builder create localhost:5000/tmp-multi-arch-builder-1698858777:latest-arm64 --config example-builder.toml --publish
+#16 5.485 Warning: builder configuration: empty 'order' definition
+#16 ...
+
+#17 [linux/amd64 stage-1 4/4] RUN <<RUN_EOF (arch=amd64...)
+#17 0.701 + arch
+#17 0.703 x86_64
+#17 0.705 + uname -a
+#17 0.708 + pack version
+#17 0.708 Linux buildkitsandbox 6.3.13-linuxkit #1 SMP PREEMPT_DYNAMIC Thu Sep  7 07:54:49 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux
+#17 0.982 0.0.0+git-44d1d89
+#17 0.985 + pack builder create localhost:5000/tmp-multi-arch-builder-1698858777:latest-amd64 --config example-builder.toml --publish
+#17 1.044 Warning: builder configuration: empty 'order' definition
+#17 3.350 Downloading from 'https://github.com/buildpacks/lifecycle/releases/download/v0.17.2/lifecycle-v0.17.2+linux.x86-64.tgz'
+10.6 MB/10.6 MB0.6 MB
+#17 ...
+
+#16 [linux/arm64 stage-1 4/4] RUN <<RUN_EOF (arch=amd64...)
+#16 11.01 Downloading from 'https://github.com/buildpacks/lifecycle/releases/download/v0.17.2/lifecycle-v0.17.2+linux.arm64.tgz'
+9.64 MB/9.64 MB.64 MB
+#16 ...
+
+#17 [linux/amd64 stage-1 4/4] RUN <<RUN_EOF (arch=amd64...)
+#17 50.13 Successfully created builder image 'localhost:5000/tmp-multi-arch-builder-1698858777:latest-amd64'
+#17 50.13 Tip: Run 'pack build <image-name> --builder localhost:5000/tmp-multi-arch-builder-1698858777:latest-amd64' to use this builder
+#17 DONE 50.3s
+
+#16 [linux/arm64 stage-1 4/4] RUN <<RUN_EOF (arch=amd64...)
+#16 50.72 Successfully created builder image 'localhost:5000/tmp-multi-arch-builder-1698858777:latest-arm64'
+#16 50.72 Tip: Run 'pack build <image-name> --builder localhost:5000/tmp-multi-arch-builder-1698858777:latest-arm64' to use this builder
+#16 DONE 50.8s
+WARNING: No output specified with docker-container driver. Build result will only remain in the build cache. To push result image into registry use --push or to load image into docker use --load
++ rm create-arch-builders.Dockerfile
+++ crane config localhost:5000/tmp-multi-arch-builder-1698858777:latest-arm64
+++ jq .architecture -r
++ '[' arm64 = amd64 ']'
++ echo 'Creating and pushing multi-arch builder in local registry: localhost:5000/tmp-multi-arch-builder-1698858777:latest'
+Creating and pushing multi-arch builder in local registry: localhost:5000/tmp-multi-arch-builder-1698858777:latest
++ docker buildx imagetools create -t localhost:5000/tmp-multi-arch-builder-1698858777:latest localhost:5000/tmp-multi-arch-builder-1698858777:latest-arm64 localhost:5000/tmp-multi-arch-builder-1698858777:latest-amd64
+[+] Building 0.0s (1/1) FINISHED                                                                                                                                                 
+ => [internal] pushing localhost:5000/tmp-multi-arch-builder-1698858777:latest                                                                                              0.0s
++ crane index filter localhost:5000/tmp-multi-arch-builder-1698858777:latest --platform linux -t localhost:5000/tmp-multi-arch-builder-1698858777:latest
+2023/11/01 13:15:39 existing manifest: sha256:92646f01e7c7eab4541fbf04c3690cd34a38e1df4ada48561b35aa8af527f81f
+2023/11/01 13:15:39 existing manifest: sha256:627bf9fad0d9d68e5cd8554f541e7361a2825935d0bbc9b773816aa5a47826fe
+2023/11/01 13:15:39 localhost:5000/tmp-multi-arch-builder-1698858777:latest: digest: sha256:40e7c1b03ad0807768fb056da35eb3ceb74737dafdfef37c258f57e7fa67fb62 size: 493
+localhost:5000/tmp-multi-arch-builder-1698858777@sha256:40e7c1b03ad0807768fb056da35eb3ceb74737dafdfef37c258f57e7fa67fb62
++ crane manifest localhost:5000/tmp-multi-arch-builder-1698858777:latest
++ jq
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 1685,
+      "digest": "sha256:92646f01e7c7eab4541fbf04c3690cd34a38e1df4ada48561b35aa8af527f81f",
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 1685,
+      "digest": "sha256:627bf9fad0d9d68e5cd8554f541e7361a2825935d0bbc9b773816aa5a47826fe",
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    }
+  ]
+}
++ echo 'Testing the local multi-arch builder to ensure the lifecycle binary works.'
+Testing the local multi-arch builder to ensure the lifecycle binary works.
++ for arch in amd64 arm64
++ docker pull --platform linux/amd64 --quiet localhost:5000/tmp-multi-arch-builder-1698858777:latest
+localhost:5000/tmp-multi-arch-builder-1698858777:latest
++ docker run --platform linux/amd64 --rm --entrypoint arch localhost:5000/tmp-multi-arch-builder-1698858777:latest
+x86_64
++ docker run --platform linux/amd64 --rm --entrypoint /cnb/lifecycle/lifecycle localhost:5000/tmp-multi-arch-builder-1698858777:latest -version
+0.17.2+0b0bd4f4
++ for arch in amd64 arm64
++ docker pull --platform linux/arm64 --quiet localhost:5000/tmp-multi-arch-builder-1698858777:latest
+localhost:5000/tmp-multi-arch-builder-1698858777:latest
++ docker run --platform linux/arm64 --rm --entrypoint arch localhost:5000/tmp-multi-arch-builder-1698858777:latest
+aarch64
++ docker run --platform linux/arm64 --rm --entrypoint /cnb/lifecycle/lifecycle localhost:5000/tmp-multi-arch-builder-1698858777:latest -version
+0.17.2+0b0bd4f4
++ echo '$dest_image_uri '
+$dest_image_uri 
++ [[ ! -z '' ]]
