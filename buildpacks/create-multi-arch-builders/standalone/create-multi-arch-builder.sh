@@ -12,8 +12,8 @@
 # This is useful if you already built a custom pack image (using the repo and branch above) and you want to reuse without rebuliding it.
 # export PACK_IMAGE_URI=localhost:5000/pack:latest
 
-# Usage: ./multi-arch.sh <builder-TOML-filename> builderDestRepo:builderDestTag
-# Example: ./multi-arch.sh builder.toml ghcr.io/jericop/my-multi-arch-builder:0.0.1
+# Usage: .create-multi-arch-builders.sh <builder-TOML-filename> builderDestRepo:builderDestTag
+# Example: ./create-multi-arch-builders.sh builder.toml ghcr.io/jericop/my-multi-arch-builder:0.0.1
 
 # e: abort script right as an error occurs so it's not overlooked
 # u: fail when var refs are undefined, used for required args

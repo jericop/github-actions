@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-export PACK_IMAGE_URI=buildpacksio/pack:latest
+export PACK_IMAGE_URI=buildpacksio/pack:0.31.0
 
 # Only builds and pushes to the local registry
 ./create-multi-arch-builder.sh example-builder.toml
