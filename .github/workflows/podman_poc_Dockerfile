@@ -1,0 +1,31 @@
+# This dockerfile installs qemu and podman with the goal of starting an arm64 podman machine to run arm64 containers
+# docker build -f podman_poc_Dockerfile -t arm64-podman .
+FROM ubuntu:jammy
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y curl sudo xz-utils ssh-tools
+
+# RUN sudo apt-get install -y qemu-user qemu-user-binfmt qemu-system-x86 qemu-system-arm podman
+RUN sudo apt-get install -y qemu-user qemu-user-binfmt qemu-system-x86 podman
+
+RUN curl -L -O https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/38.20230709.3.0/aarch64/fedora-coreos-38.20230709.3.0-qemu.aarch64.qcow2.xz$arm64_coreos_archive_name && \
+    sudo curl -L -o /usr/libexec/podman/gvproxy https://github.com/containers/gvisor-tap-vsock/releases/download/v0.7.0/gvproxy-linux && \
+    chmod +x /usr/libexec/podman/gvproxy && \
+    podman machine ls
+
+RUN podman machine init --image-path fedora-coreos-38.20230709.3.0-qemu.aarch64.qcow2.xz arm64 && \
+    podman system connection default arm64 && \
+    podman machine ls
+
+    
+    # Entrypoint script
+    # podman machine ls
+    # # https://github.com/boot2docker/boot2docker/issues/1138
+    # mknod /dev/kvm c 10 232
+    # podman machine start arm64
+
+# RUN bash -c $(cat <<ENTRYPOINT_EOF 
+# podman machine ls
+# ENTRYPOINT_EOF
+# )

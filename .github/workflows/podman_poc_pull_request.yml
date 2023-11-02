@@ -1,0 +1,46 @@
+name: podman_poc
+on: pull_request
+jobs:
+  poc:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+      - id: install-podman
+        run: |
+          set -x
+          sudo apt update
+          sudo apt upgrade -y
+
+          ls -l /dev
+          # # https://github.com/orgs/community/discussions/8305
+          # echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          # sudo udevadm control --reload-rules
+          # sudo udevadm trigger --name-match=kvm
+          # sudo apt-get install -y libvirt-clients libvirt-daemon-system libvirt-daemon virtinst bridge-utils qemu qemu-system-x86
+          # sudo usermod -a -G kvm,libvirt $USER
+
+          # sudo apt install -y libvirt-daemon
+          # sudo systemctl enable libvirtd
+          # sudo systemctl start libvirtd
+
+          sudo apt-get install -y qemu-user qemu-user-binfmt qemu-system-x86 qemu-system-arm
+          sudo apt-get install -y podman
+
+          # gvproxy is required to start arm64 podman machine
+          sudo curl -L -o /usr/libexec/podman/gvproxy https://github.com/containers/gvisor-tap-vsock/releases/download/v0.7.0/gvproxy-linux
+          sudo chmod +x /usr/libexec/podman/gvproxy
+
+          podman machine ls
+          arm64_coreos_archive_filename=fedora-coreos-38.20230709.3.0-qemu.aarch64.qcow2.xz
+          curl -O https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/38.20230709.3.0/aarch64/$arm64_coreos_archive_filename
+          podman machine init --image-path $arm64_coreos_archive_filename arm64
+          podman system connection default arm64
+          podman machine start arm64
+          podman machine ls
+
+          docker pull ubuntu:jammy
+          docker run --rm ubuntu:jammy arch
+
+          podman pull ubuntu:jammy
+          podman run --rm ubuntu:jammy arch
